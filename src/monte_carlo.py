@@ -1,4 +1,5 @@
 import abc
+import sys
 
 from src import environment
 from statistics import mean
@@ -10,7 +11,7 @@ class MonteCarlo:
         self.gamma = gamma
 
     @abc.abstractmethod
-    def _evaluate_policy(self, policy: list) -> list:
+    def _evaluate_policy(self, policy: list) -> tuple:
         """
         Implement policy based on method used
         :param policy: Policy to evaluate
@@ -23,11 +24,18 @@ class MonteCarlo:
         policy = [random.choice(environment.labyrinth[state]) for state in environment.labyrinth]
 
         # init Q-Values and rewards list
-        r = [{action: [0] for action in environment.labyrinth[field]} for field in environment.labyrinth]
+        r = [{action: [] for action in environment.labyrinth[field]} for field in environment.labyrinth]
         q_pi = [{action: 0 for action in environment.labyrinth[field]} for field in environment.labyrinth]
 
+        wins = loses = 0
+
         for i in range(episodes):
-            sag_list = self._evaluate_policy(policy)
+            sag_list, win = self._evaluate_policy(policy)
+            if win:
+                wins = wins + 1
+            else:
+                loses = loses + 1
+            self.progress(i + 1, episodes, wins, loses)
             visited_states_actions = []  # (state, action) tuple
 
             # update Q-Values for each pair (s, a) of sag_list according to first visit
@@ -53,6 +61,17 @@ class MonteCarlo:
         sag_list.reverse()
         return sag_list
 
+    @staticmethod
+    def progress(count, total, wins, loses):
+        bar_len = 60
+        filled_len = int(round(bar_len * count / float(total)))
+
+        bar = '=' * filled_len + '-' * (bar_len - filled_len)
+        finish = ' - Done!\r\n' if count == total else ''
+
+        sys.stdout.write(f'\r[{bar}] {count}/{total} Episodes - Wins: {wins} / Loses: {loses}{finish}')
+        sys.stdout.flush()
+
 
 class MonteCarloWithoutES(MonteCarlo):
     def __init__(self, epsilon: float, gamma: float):
@@ -60,7 +79,7 @@ class MonteCarloWithoutES(MonteCarlo):
         self.epsilon = epsilon
 
     # policy evaluation
-    def _evaluate_policy(self, policy: list) -> list:
+    def _evaluate_policy(self, policy: list) -> tuple:
         # start at given entry point
         state = environment.entry_id
 
@@ -68,12 +87,14 @@ class MonteCarloWithoutES(MonteCarlo):
         action = random.choice(environment.labyrinth[state])
 
         sar_list = []  # (state, action, reward) tuple
+        win = None
         # play until win/loose
         while True:
             state, reward = environment.move(action, state)
             if reward is not 0:
                 # game finished
                 sar_list.append((state, None, reward))
+                win = reward > 0
                 break
             else:
                 # exploration factor epsilon
@@ -81,7 +102,7 @@ class MonteCarloWithoutES(MonteCarlo):
                 sar_list.append((state, action, reward))
 
         # calculate total reward for each step of the episode
-        return self._calculate_sag_list(sar_list)
+        return self._calculate_sag_list(sar_list), win
 
 
 class MonteCarloExploringStart(MonteCarlo):

@@ -81,8 +81,18 @@ def get_policy_and_start_position(method: MonteCarlo, episodes: int, random_star
 clock = pygame.time.Clock()
 running = True
 
-mc_without_es = MonteCarloWithoutES(epsilon=0.9, gamma=0.95)
-mc_exploring_start = MonteCarloExploringStart(gamma=0.9)
+# Hard labyrinth
+environment.exit_id = 5
+environment.trap_id = 2
+mc_without_es = MonteCarloWithoutES(epsilon=0.6, gamma=0.9)
+
+# Custom labyrinth
+# environment.exit_id = 17
+# environment.trap_id = 33
+# mc_without_es = MonteCarloWithoutES(epsilon=0.7, gamma=0.9)
+
+# mc_exploring_start = MonteCarloExploringStart(gamma=0.9)
+
 steps = 50
 while running:
     for event in pygame.event.get():
@@ -90,7 +100,7 @@ while running:
             running = False
 
     if steps >= 50:
-        mc_policy, position, values = get_policy_and_start_position(mc_without_es, episodes=200, random_start=True)
+        mc_policy, position, values = get_policy_and_start_position(mc_without_es, episodes=200, random_start=False)
         print(f"new policy: {mc_policy}")
         environment.prettyprint(values)
         steps = 0
