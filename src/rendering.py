@@ -3,7 +3,7 @@ import pygame.draw
 import pygame.freetype
 import pygame.font
 from src import environment
-from src.monte_carlo import MonteCarloWithoutES
+from src.monte_carlo import MonteCarlo, MonteCarloWithoutES, MonteCarloExploringStart
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -58,7 +58,7 @@ def render(position_id, value_map=None):
         if pid == environment.exit_id:
             pygame.draw.circle(background, GREEN, (x + (cell_size[0] // 2), y + (cell_size[1] // 2)), 20)
 
-        # if value_map is not None and pid in value_map.keys():
+        # if value_map is not None:
         #     text = font.render(str(value_map[pid]), False, (0, 0, 0))
         #     background.blit(text, (x,y))
 
@@ -70,12 +70,19 @@ def shutdown():
     pygame.quit()
 
 
+def get_policy_and_start_position(method: MonteCarlo, episodes: int, random_start: bool) -> tuple:
+    policy, values = method.generate_monte_carlo_policy(episodes)
+    start_position = MonteCarloExploringStart.get_random_start_position() if random_start else environment.entry_id
+    return policy, start_position, values
+
+
 # BEISPIEL:
 
 clock = pygame.time.Clock()
 running = True
 
-mc_control = MonteCarloWithoutES(epsilon=0.5, gamma=0.9)
+mc_without_es = MonteCarloWithoutES(epsilon=0.9, gamma=0.95)
+mc_exploring_start = MonteCarloExploringStart(gamma=0.9)
 steps = 50
 while running:
     for event in pygame.event.get():
@@ -83,16 +90,18 @@ while running:
             running = False
 
     if steps >= 50:
-        mc_policy = mc_control.generate_monte_carlo_policy(100)
+        mc_policy, position, values = get_policy_and_start_position(mc_without_es, episodes=200, random_start=True)
         print(f"new policy: {mc_policy}")
-        position = environment.entry_id
+        environment.prettyprint(values)
         steps = 0
+        render(position)
+        pygame.time.wait(1000)
 
-    clock.tick(2)
-    render(position)
-    pygame.time.wait(300)
+    clock.tick(60)
+    render(position, values)
+    pygame.time.wait(150)
     if position == environment.trap_id:
-        print("You failed!")
+        print("You lost!")
         steps = 50
         # running = False
     elif position == environment.exit_id:
