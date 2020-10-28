@@ -2,7 +2,8 @@ import pygame
 import pygame.draw
 import pygame.freetype
 import pygame.font
-import environment
+from src import environment
+from src.monte_carlo import MonteCarloWithoutES
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -74,11 +75,32 @@ def shutdown():
 clock = pygame.time.Clock()
 running = True
 
+mc_control = MonteCarloWithoutES(epsilon=0.5, gamma=0.9)
+steps = 50
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    render(environment.entry_id)
+    if steps >= 50:
+        mc_policy = mc_control.generate_monte_carlo_policy(100)
+        print(f"new policy: {mc_policy}")
+        position = environment.entry_id
+        steps = 0
+
     clock.tick(2)
+    render(position)
+    pygame.time.wait(300)
+    if position == environment.trap_id:
+        print("You failed!")
+        steps = 50
+        # running = False
+    elif position == environment.exit_id:
+        print("You won!")
+        steps = 50
+        # running = False
+    next_action = mc_policy[position]
+    position = environment.next_position_functions[next_action](position)
+    steps = steps + 1
+
 

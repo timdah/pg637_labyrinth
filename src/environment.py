@@ -11,7 +11,7 @@ def left(position_id):
 
 
 def right(position_id):
-    if position_id % field_length < field_length:
+    if position_id % field_length < field_length - 1:
         return position_id + 1
 
     return INVALID_PID
@@ -89,8 +89,10 @@ entry_id = 24
 exit_id = 2  # 11
 trap_id = 17
 
+
 def get_valid_directions(position_id):
     return labyrinth[position_id]
+
 
 def move(direction, source_id):
     if source_id == exit_id:
@@ -108,6 +110,7 @@ def move(direction, source_id):
         raise ValueError('Something went horribly wrong!')
 
     return target_id, 0
+
 
 def prettyprint(values):
     print('\n----------------------')
