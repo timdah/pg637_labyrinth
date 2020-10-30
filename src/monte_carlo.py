@@ -74,6 +74,9 @@ class MonteCarlo:
 
 
 class MonteCarloWithoutES(MonteCarlo):
+    """
+    On-policy first-visit MC control with epsilon-greedy policy
+    """
     def __init__(self, epsilon: float, gamma: float):
         super().__init__(gamma)
         self.epsilon = epsilon
@@ -106,6 +109,10 @@ class MonteCarloWithoutES(MonteCarlo):
 
 
 class MonteCarloExploringStart(MonteCarlo):
+    """
+    Not working because of deterministic policy.
+    TODO make policy probabilistic
+    """
     def __init__(self, gamma: float):
         super().__init__(gamma)
 
@@ -145,6 +152,6 @@ class MonteCarloExploringStart(MonteCarlo):
 
 if __name__ == "__main__":
     mc_control = MonteCarloWithoutES(epsilon=0.9, gamma=0.9)
-    mc_policy, state_values = mc_control.generate_monte_carlo_policy(100)
+    mc_policy, state_values = mc_control.generate_monte_carlo_policy(episodes=100)
     print(mc_policy)
     environment.prettyprint(state_values)
