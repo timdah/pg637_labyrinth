@@ -1,4 +1,5 @@
 import abc
+import math
 import sys
 
 from src import environment
@@ -12,7 +13,7 @@ class MonteCarlo:
         self.actions = list(environment.next_position_functions.keys())
 
     @abc.abstractmethod
-    def _evaluate_policy(self, policy: list) -> tuple:
+    def _evaluate_policy(self, policy: list, episodes: int, current_episode: int) -> tuple:
         """
         Implement policy based on method used
         :param policy: Policy to evaluate
@@ -31,7 +32,7 @@ class MonteCarlo:
         wins = loses = 0
 
         for i in range(episodes):
-            sag_list, win = self._evaluate_policy(policy)
+            sag_list, win = self._evaluate_policy(policy, episodes, i)
             if win:
                 wins = wins + 1
             else:
@@ -83,9 +84,16 @@ class MonteCarloWithoutES(MonteCarlo):
     def __init__(self, epsilon: float, gamma: float):
         super().__init__(gamma)
         self.epsilon = epsilon
+        self.annealing = True
+        if self.annealing:
+            self.epsilon_init = self.epsilon
 
     # policy evaluation
-    def _evaluate_policy(self, policy: list) -> tuple:
+    def _evaluate_policy(self, policy: list, episodes: int, current_episode: int) -> tuple:
+        # annealing epsilon
+        if self.annealing:
+            self.epsilon = self.epsilon_init * (1 - math.pow(current_episode/episodes, 2))
+
         # start at given entry point
         state = environment.entry_id
 
@@ -126,7 +134,7 @@ class MonteCarloExploringStart(MonteCarlo):
         return random.choice(possible_states)
 
     # policy evaluation
-    def _evaluate_policy(self, policy: list) -> list:
+    def _evaluate_policy(self, policy: list, episodes: int, current_episode: int) -> list:
         # start at a random point (not exit or trap)
         state = self.get_random_start_position()
 
