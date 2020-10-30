@@ -78,10 +78,10 @@ class MonteCarloWithoutES(MonteCarlo):
     """
     On-policy first-visit MC control with epsilon-greedy policy
     """
-    def __init__(self, epsilon: float, gamma: float):
+    def __init__(self, epsilon: float, gamma: float, annealing: bool = False):
         super().__init__(gamma)
         self.epsilon = epsilon
-        self.annealing = True
+        self.annealing = annealing
         if self.annealing:
             self.epsilon_init = self.epsilon
 
