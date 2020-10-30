@@ -9,6 +9,7 @@ import random
 class MonteCarlo:
     def __init__(self, gamma: float):
         self.gamma = gamma
+        self.actions = list(environment.next_position_functions.keys())
 
     @abc.abstractmethod
     def _evaluate_policy(self, policy: list) -> tuple:
@@ -21,11 +22,11 @@ class MonteCarlo:
     # policy improvement
     def generate_monte_carlo_policy(self, episodes: int) -> tuple:
         # create random policy
-        policy = [random.choice(environment.labyrinth[state]) for state in environment.labyrinth]
+        policy = [random.choice(self.actions) for _ in environment.position_ids]
 
         # init Q-Values and rewards list
-        r = [{action: [] for action in environment.labyrinth[field]} for field in environment.labyrinth]
-        q_pi = [{action: 0 for action in environment.labyrinth[field]} for field in environment.labyrinth]
+        r = [{action: [] for action in self.actions} for _ in environment.position_ids]
+        q_pi = [{action: 0 for action in self.actions} for _ in environment.position_ids]
 
         wins = loses = 0
 
@@ -48,7 +49,9 @@ class MonteCarlo:
             # update policy greedy
             for state in range(len(policy)):
                 policy[state] = max(q_pi[state], key=q_pi[state].get)
-        v_pi = [max(q_pi[state].values()) for state in environment.labyrinth]
+        v_pi = [max(q_pi[state].values()) for state in environment.position_ids]
+        # for state in q_pi:
+        #     print(len(state))
         return policy, v_pi
 
     def _calculate_sag_list(self, sar_list: list) -> list:
@@ -87,23 +90,22 @@ class MonteCarloWithoutES(MonteCarlo):
         state = environment.entry_id
 
         # choose random action
-        action = random.choice(environment.labyrinth[state])
+        action = random.choice(self.actions)
 
         sar_list = []  # (state, action, reward) tuple
         win = None
         # play until win/loose
         while True:
             state, reward = environment.move(action, state)
-            if reward is not 0:
+            if reward is 1 or reward is -1:
                 # game finished
                 sar_list.append((state, None, reward))
                 win = reward > 0
                 break
             else:
                 # exploration factor epsilon
-                action = random.choice(environment.get_valid_directions(state)) if random.random() <= self.epsilon else policy[state]
+                action = random.choice(self.actions) if random.random() <= self.epsilon else policy[state]
                 sar_list.append((state, action, reward))
-
         # calculate total reward for each step of the episode
         return self._calculate_sag_list(sar_list), win
 

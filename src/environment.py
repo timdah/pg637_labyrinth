@@ -102,7 +102,7 @@ def move(direction, source_id):
         return source_id, -1
 
     if direction not in get_valid_directions(source_id):
-        return source_id, 0
+        return source_id, -0.01
 
     target_id = next_position_functions[direction](source_id)
 

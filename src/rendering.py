@@ -77,20 +77,27 @@ def get_policy_and_start_position(method: MonteCarlo, episodes: int, random_star
 
 
 # BEISPIEL:
-
 clock = pygame.time.Clock()
 running = True
+
 
 # Hard labyrinth
 environment.entry_id = 1
 environment.exit_id = 5
 environment.trap_id = 2
+eps = 200
 mc_without_es = MonteCarloWithoutES(epsilon=0.6, gamma=0.9)
 
 # Custom labyrinth
 # environment.exit_id = 17
 # environment.trap_id = 33
+# eps = 200
 # mc_without_es = MonteCarloWithoutES(epsilon=0.7, gamma=0.9)
+
+# Default labyrinth
+# eps = 200
+# mc_without_es = MonteCarloWithoutES(epsilon=0.7, gamma=0.9)
+
 
 # mc_exploring_start = MonteCarloExploringStart(gamma=0.9)
 
@@ -101,7 +108,7 @@ while running:
             running = False
 
     if steps >= 50:
-        mc_policy, position, values = get_policy_and_start_position(mc_without_es, episodes=200, random_start=False)
+        mc_policy, position, values = get_policy_and_start_position(mc_without_es, episodes=eps, random_start=False)
         print(f"new policy: {mc_policy}")
         environment.prettyprint(values)
         steps = 0
@@ -110,6 +117,7 @@ while running:
 
     clock.tick(60)
     render(position, values)
+    print(position)
     pygame.time.wait(150)
     if position == environment.trap_id:
         print("You lost!")
