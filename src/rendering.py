@@ -86,7 +86,7 @@ environment.entry_id = 1
 environment.exit_id = 5
 environment.trap_id = 2
 eps = 200
-mc_without_es = MonteCarloWithoutES(epsilon=0.6, gamma=0.9)
+mc_without_es = MonteCarloWithoutES(epsilon=0.6, gamma=0.9, annealing=True)
 
 # Custom labyrinth
 # environment.exit_id = 17
