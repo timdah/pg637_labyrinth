@@ -79,18 +79,18 @@ def get_mc_policy_and_start_position(method: MonteCarlo, episodes: int, random_s
 
 
 def get_dqn_policy_and_start_position() -> tuple:
-    policy, state_values = dqn.train_dqn(lr=0.00025,
-                                         rb_size=2000,
-                                         max_frames=30000,
-                                         start_train_frame=200,
-                                         epsilon_start=1.0,
-                                         epsilon_end=0.1,
-                                         epsilon_decay=25000,
-                                         batch_size=64,
-                                         gamma=0.99,
-                                         target_network_update_freq=500,
-                                         log_every=100)
-    return policy, environment.entry_id, state_values
+    policy, state_values, state_visit_count = dqn.train_dqn(lr=0.00025,
+                                                            rb_size=20000,
+                                                            max_frames=300,
+                                                            start_train_frame=200,
+                                                            epsilon_start=1.0,
+                                                            epsilon_end=0.1,
+                                                            epsilon_decay=25000,
+                                                            batch_size=32,
+                                                            gamma=0.9,
+                                                            target_network_update_freq=500,
+                                                            log_every=100)
+    return policy, environment.entry_id, state_values, state_visit_count
 
 
 # BEISPIEL:
@@ -98,15 +98,15 @@ clock = pygame.time.Clock()
 running = True
 
 # Hard labyrinth
-environment.entry_id = 35  # 1
-environment.exit_id = 5
-environment.trap_id = 2
+# environment.entry_id = 1  # 35
+# environment.exit_id = 5
+# environment.trap_id = 2
 # eps = 200
 # mc_without_es = MonteCarloWithoutES(epsilon=0.6, gamma=0.9, annealing=True)
 
 # Custom labyrinth
-# environment.exit_id = 17
-# environment.trap_id = 33
+environment.exit_id = 17
+environment.trap_id = 33
 # eps = 200
 # mc_without_es = MonteCarloWithoutES(epsilon=0.7, gamma=0.9)
 
@@ -125,10 +125,12 @@ while running:
 
     if steps >= 50:
         # final_policy, position, values = get_mc_policy_and_start_position(mc_without_es, episodes=eps, random_start=False)
-        final_policy, position, values = get_dqn_policy_and_start_position()
+        final_policy, position, values, states_visited = get_dqn_policy_and_start_position()
         print(f"new policy: {final_policy}")
+        environment.prettyprint(states_visited)
         environment.prettyprint(values)
         steps = 0
+        clock.tick(60)
         render(position, values)
         clock.tick(60)
         pygame.time.wait(1000)

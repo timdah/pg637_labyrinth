@@ -119,6 +119,9 @@ def prettyprint(values):
         if i % 6 == 0 and not i == 0:
             print('\n')
 
-        print("| {:2f} |".format(val), end='')
+        try:
+            print("| {:3d} |".format(val), end='')
+        except:
+            print("| {:.4f} |".format(val), end='')
 
     print('\n----------------------')

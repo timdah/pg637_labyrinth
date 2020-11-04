@@ -181,6 +181,7 @@ def train_dqn(lr: float, rb_size: int, max_frames: int, start_train_frame: int,
 
     # Stats for logging
     wins = loses = steps_per_episode = steps = 0
+    states_visited = [0] * NUM_STATES
 
     for frame in range(1, max_frames + 1):
         # With probability epsilon select a random action a_t
@@ -198,6 +199,7 @@ def train_dqn(lr: float, rb_size: int, max_frames: int, start_train_frame: int,
         state = next_state
         episode_reward += reward
         steps += 1
+        states_visited[state] += 1
 
         # End of an episode
         if done:
@@ -232,7 +234,8 @@ def train_dqn(lr: float, rb_size: int, max_frames: int, start_train_frame: int,
             last_loss = losses[-1] if len(losses) > 0 else 0
             Utils.progress(frame, max_frames, wins, loses, steps_per_episode, last_reward, last_loss)
 
-    return Utils.extract_deterministic_policy(target_q_network)
+    target_policy, state_values_policy = Utils.extract_deterministic_policy(target_q_network)
+    return target_policy, state_values_policy, states_visited
 
 
 if __name__ == "__main__":
