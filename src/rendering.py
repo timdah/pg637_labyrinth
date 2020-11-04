@@ -2,6 +2,8 @@ import pygame
 import pygame.draw
 import pygame.freetype
 import pygame.font
+
+import dqn
 from src import environment
 from src.monte_carlo import MonteCarlo, MonteCarloWithoutES, MonteCarloExploringStart
 
@@ -42,7 +44,7 @@ def render(position_id, value_map=None):
         y = (pid // environment.field_length) * cell_size[1]
 
         wall_directions = [d for d in ['left', 'right', 'up', 'down'] if d not in environment.get_valid_directions(pid)]
-        
+
         for direction in wall_directions:
             wall_offset = wall_offsets[direction]
             wall_rect = pygame.Rect(x + wall_offset[0], y + wall_offset[1], wall_offset[2], wall_offset[3])
@@ -70,23 +72,37 @@ def shutdown():
     pygame.quit()
 
 
-def get_policy_and_start_position(method: MonteCarlo, episodes: int, random_start: bool) -> tuple:
-    policy, values = method.generate_monte_carlo_policy(episodes)
+def get_mc_policy_and_start_position(method: MonteCarlo, episodes: int, random_start: bool) -> tuple:
+    policy, state_values = method.generate_monte_carlo_policy(episodes)
     start_position = MonteCarloExploringStart.get_random_start_position() if random_start else environment.entry_id
-    return policy, start_position, values
+    return policy, start_position, state_values
+
+
+def get_dqn_policy_and_start_position() -> tuple:
+    policy, state_values = dqn.train_dqn(lr=0.00025,
+                                         rb_size=2000,
+                                         max_frames=30000,
+                                         start_train_frame=200,
+                                         epsilon_start=1.0,
+                                         epsilon_end=0.1,
+                                         epsilon_decay=25000,
+                                         batch_size=64,
+                                         gamma=0.99,
+                                         target_network_update_freq=500,
+                                         log_every=100)
+    return policy, environment.entry_id, state_values
 
 
 # BEISPIEL:
 clock = pygame.time.Clock()
 running = True
 
-
 # Hard labyrinth
-environment.entry_id = 1
+environment.entry_id = 35  # 1
 environment.exit_id = 5
 environment.trap_id = 2
-eps = 200
-mc_without_es = MonteCarloWithoutES(epsilon=0.6, gamma=0.9, annealing=True)
+# eps = 200
+# mc_without_es = MonteCarloWithoutES(epsilon=0.6, gamma=0.9, annealing=True)
 
 # Custom labyrinth
 # environment.exit_id = 17
@@ -108,17 +124,19 @@ while running:
             running = False
 
     if steps >= 50:
-        mc_policy, position, values = get_policy_and_start_position(mc_without_es, episodes=eps, random_start=False)
-        print(f"new policy: {mc_policy}")
+        # final_policy, position, values = get_mc_policy_and_start_position(mc_without_es, episodes=eps, random_start=False)
+        final_policy, position, values = get_dqn_policy_and_start_position()
+        print(f"new policy: {final_policy}")
         environment.prettyprint(values)
         steps = 0
-        render(position)
+        render(position, values)
+        clock.tick(60)
         pygame.time.wait(1000)
 
     clock.tick(60)
     render(position, values)
     print(position)
-    pygame.time.wait(150)
+    pygame.time.wait(300)
     if position == environment.trap_id:
         print("You lost!")
         steps = 50
@@ -127,8 +145,6 @@ while running:
         print("You won!")
         steps = 50
         # running = False
-    next_action = mc_policy[position]
+    next_action = final_policy[position]
     position = environment.next_position_functions[next_action](position)
     steps = steps + 1
-
-

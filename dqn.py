@@ -1,9 +1,11 @@
+import sys
+
 import torch
 from copy import deepcopy
 import random
 from src import environment as env
-import math
 from collections import deque
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -90,13 +92,27 @@ class Utils:
         :param target_q_network: Network to extract policy from
         :return: policy pi, state values under policy pi
         """
-        state_tensors = [Utils.get_one_hot_tensor(i) for i in range(NUM_STATES)]
-        state_tensors = torch.stack(state_tensors)
-        q_values = target_q_network.forward(state_tensors)
-        max_indices = torch.max(q_values, dim=1)
-        policy = [cls.get_action_string(action) for action in max_indices.indices]
-        state_values = max_indices.values
-        return policy, state_values
+        with torch.no_grad():
+            state_tensors = [Utils.get_one_hot_tensor(i) for i in range(NUM_STATES)]
+            state_tensors = torch.stack(state_tensors)
+            q_values = target_q_network.forward(state_tensors)
+            max_indices = torch.max(q_values, dim=1)
+            extracted_policy = [cls.get_action_string(action) for action in max_indices.indices]
+            state_values_under_extracted_policy = list(max_indices.values)
+            return extracted_policy, state_values_under_extracted_policy
+
+    @staticmethod
+    def progress(frame, max_frames, wins, loses, steps_per_episode: int, last_reward: float, last_loss: float):
+        bar_len = 60
+        filled_len = int(round(bar_len * frame / float(max_frames)))
+
+        bar = '=' * filled_len + '-' * (bar_len - filled_len)
+        finish = '- Done!\r\n' if frame == max_frames else ''
+
+        last_episode = f'- Last Episode: (steps={steps_per_episode:4}, reward={last_reward:.4f}, loss={last_loss:.4f})'
+
+        sys.stdout.write(f'\r[{bar}] {frame}/{max_frames} Frames - Wins: {wins} / Loses: {loses} {last_episode} {finish}')
+        sys.stdout.flush()
 
 
 class Agent:
@@ -112,7 +128,8 @@ class Agent:
         return torch.tensor(random.randrange(NUM_ACTIONS), device=device)
 
 
-def gradient_descent_step(agent: Agent, optimizer: torch.optim.Optimizer, replay_buffer: ReplayBuffer, batch_size: int, gamma: float):
+def gradient_descent_step(agent: Agent, optimizer: torch.optim.Optimizer, replay_buffer: ReplayBuffer, batch_size: int,
+                          gamma: float):
     # sample random mini-batch
     state, action, reward, next_state, done = replay_buffer.sample(batch_size)
 
@@ -162,7 +179,10 @@ def train_dqn(lr: float, rb_size: int, max_frames: int, start_train_frame: int,
     episode_reward = 0
     state = env.entry_id
 
-    for frame in range(1, max_frames):
+    # Stats for logging
+    wins = loses = steps_per_episode = steps = 0
+
+    for frame in range(1, max_frames + 1):
         # With probability epsilon select a random action a_t
         # otherwise select a_t = argmax Q(s_t, a)
         epsilon = Utils.get_epsilon(epsilon_start, epsilon_end, epsilon_decay, frame)
@@ -177,12 +197,19 @@ def train_dqn(lr: float, rb_size: int, max_frames: int, start_train_frame: int,
 
         state = next_state
         episode_reward += reward
+        steps += 1
 
         # End of an episode
         if done:
             state = env.entry_id
             all_rewards.append(episode_reward)
             episode_reward = 0
+            if reward == 1:
+                wins += 1
+            else:
+                loses += 1
+            steps_per_episode = steps
+            steps = 0
 
         if len(replay_buffer) > start_train_frame:
             # Perform SGD step
@@ -195,12 +222,15 @@ def train_dqn(lr: float, rb_size: int, max_frames: int, start_train_frame: int,
 
         # Logging
         if frame % log_every == 0:
-            out_str = f"Frame {frame}"
-            if len(all_rewards) > 0:
-                out_str += f", Reward: {all_rewards[-1]}"
-            if len(losses) > 0:
-                out_str += f", TD Loss: {losses[-1]}"
-            print(out_str)
+            # out_str = f"Frame {frame}"
+            # if len(all_rewards) > 0:
+            #     out_str += f", Reward: {all_rewards[-1]}"
+            # if len(losses) > 0:
+            #     out_str += f", TD Loss: {losses[-1]}"
+            # print(out_str)
+            last_reward = all_rewards[-1] if len(all_rewards) > 0 else 0
+            last_loss = losses[-1] if len(losses) > 0 else 0
+            Utils.progress(frame, max_frames, wins, loses, steps_per_episode, last_reward, last_loss)
 
     return Utils.extract_deterministic_policy(target_q_network)
 
@@ -216,14 +246,16 @@ if __name__ == "__main__":
     # print(Utils.get_epsilon(epsilon_start, epsilon_final, final_frames, 1000))
     # print(Utils.get_epsilon(epsilon_start, epsilon_final, final_frames, 5000))
 
-    train_dqn(lr=0.001,
-              rb_size=1000,
-              max_frames=10000,
-              start_train_frame=500,
-              epsilon_start=1.0,
-              epsilon_end=0.1,
-              epsilon_decay=10000,
-              batch_size=32,
-              gamma=0.99,
-              target_network_update_freq=500,
-              log_every=100)
+    policy, state_values = train_dqn(lr=0.001,
+                                     rb_size=1000,
+                                     max_frames=10000,
+                                     start_train_frame=500,
+                                     epsilon_start=1.0,
+                                     epsilon_end=0.1,
+                                     epsilon_decay=10000,
+                                     batch_size=32,
+                                     gamma=0.99,
+                                     target_network_update_freq=500,
+                                     log_every=100)
+    print(policy)
+    print(state_values)
