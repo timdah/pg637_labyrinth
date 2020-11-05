@@ -3,9 +3,8 @@ import pygame.draw
 import pygame.freetype
 import pygame.font
 
-import dqn
-from src import environment
-from src.monte_carlo import MonteCarlo, MonteCarloWithoutES, MonteCarloExploringStart
+from src import environment, dqn
+from src.monte_carlo import MonteCarlo, MonteCarloExploringStart
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
