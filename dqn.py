@@ -6,7 +6,6 @@ import random
 from src import environment as env
 from collections import deque
 
-
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 NUM_STATES = len(env.position_ids)
@@ -111,7 +110,8 @@ class Utils:
 
         last_episode = f'- Last Episode: (steps={steps_per_episode:4}, reward={last_reward:.4f}, loss={last_loss:.4f})'
 
-        sys.stdout.write(f'\r[{bar}] {frame}/{max_frames} Frames - Wins: {wins} / Loses: {loses} {last_episode} {finish}')
+        sys.stdout.write(
+            f'\r[{bar}] {frame}/{max_frames} Frames - Wins: {wins} / Loses: {loses} {last_episode} {finish}')
         sys.stdout.flush()
 
 
@@ -239,26 +239,17 @@ def train_dqn(lr: float, rb_size: int, max_frames: int, start_train_frame: int,
 
 
 if __name__ == "__main__":
-    # ts = 10000
-    # final_frames = 10000
-    # epsilon_start = 1.0
-    # epsilon_final = 0.1
-    # buffer_size = 10
-    # learn_rate = 0.1
-
-    # print(Utils.get_epsilon(epsilon_start, epsilon_final, final_frames, 1000))
-    # print(Utils.get_epsilon(epsilon_start, epsilon_final, final_frames, 5000))
-
-    policy, state_values = train_dqn(lr=0.001,
-                                     rb_size=1000,
-                                     max_frames=10000,
-                                     start_train_frame=500,
-                                     epsilon_start=1.0,
-                                     epsilon_end=0.1,
-                                     epsilon_decay=10000,
-                                     batch_size=32,
-                                     gamma=0.99,
-                                     target_network_update_freq=500,
-                                     log_every=100)
+    policy, state_values, visit_count = train_dqn(lr=0.001,
+                                                  rb_size=1000,
+                                                  max_frames=10000,
+                                                  start_train_frame=500,
+                                                  epsilon_start=1.0,
+                                                  epsilon_end=0.1,
+                                                  epsilon_decay=10000,
+                                                  batch_size=32,
+                                                  gamma=0.99,
+                                                  target_network_update_freq=500,
+                                                  log_every=100)
     print(policy)
-    print(state_values)
+    env.prettyprint(visit_count)
+    env.prettyprint(state_values)

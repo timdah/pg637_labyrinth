@@ -101,7 +101,6 @@ class MonteCarloWithoutES(MonteCarlo):
         action = random.choice(self.actions)
 
         sar_list = []  # (state, action, reward) tuple
-        win = None
         # play until win/loose
         while True:
             state, reward = environment.move(action, state)

@@ -120,7 +120,7 @@ def prettyprint(values):
             print('\n')
 
         try:
-            print("| {:3d} |".format(val), end='')
+            print("| {:5d} |".format(val), end='')
         except:
             print("| {:.4f} |".format(val), end='')
 

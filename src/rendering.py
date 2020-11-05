@@ -81,7 +81,7 @@ def get_mc_policy_and_start_position(method: MonteCarlo, episodes: int, random_s
 def get_dqn_policy_and_start_position() -> tuple:
     policy, state_values, state_visit_count = dqn.train_dqn(lr=0.00025,
                                                             rb_size=20000,
-                                                            max_frames=300,
+                                                            max_frames=30000,
                                                             start_train_frame=200,
                                                             epsilon_start=1.0,
                                                             epsilon_end=0.1,
