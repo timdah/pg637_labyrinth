@@ -21,8 +21,8 @@ class DQN(torch.nn.Module):
             torch.nn.ReLU(),
             # torch.nn.Linear(64, 64),
             # torch.nn.ReLU(),
-            torch.nn.Linear(64, num_actions),
-            torch.nn.Softmax(dim=1)
+            torch.nn.Linear(64, num_actions)
+            # torch.nn.Softmax(dim=1)
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
