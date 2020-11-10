@@ -78,17 +78,17 @@ def get_mc_policy_and_start_position(method: MonteCarlo, episodes: int, random_s
 
 
 def get_dqn_policy_and_start_position() -> tuple:
-    policy, state_values, state_visit_count = dqn.train_dqn(lr=0.00025,
-                                                            rb_size=5000,
-                                                            max_frames=30000,
-                                                            start_train_frame=500,
-                                                            epsilon_start=1.0,
-                                                            epsilon_end=0.1,
-                                                            epsilon_decay=25000,
-                                                            batch_size=32,
-                                                            gamma=0.99,
-                                                            target_network_update_freq=1000,
-                                                            log_every=100)
+    policy, state_values, state_visit_count = dqn.train_dqn_lab(lr=0.00025,
+                                                                rb_size=5000,
+                                                                max_frames=10000,
+                                                                start_train_frame=500,
+                                                                epsilon_start=1.0,
+                                                                epsilon_end=0.05,
+                                                                epsilon_decay=8000,
+                                                                batch_size=32,
+                                                                gamma=0.99,
+                                                                target_network_update_freq=200,
+                                                                log_every=100)
     return policy, environment.entry_id, state_values, state_visit_count
 
 
@@ -104,8 +104,8 @@ running = True
 # mc_without_es = MonteCarloWithoutES(epsilon=0.6, gamma=0.9, annealing=True)
 
 # Custom labyrinth
-# environment.exit_id = 17
-# environment.trap_id = 33
+environment.exit_id = 17
+environment.trap_id = 33
 # eps = 200
 # mc_without_es = MonteCarloWithoutES(epsilon=0.7, gamma=0.9)
 
